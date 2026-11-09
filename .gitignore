@@ -1,0 +1,6 @@
+build/
+.lock-waf*
+compile_commands.json
+pebble_screenshot_*.png
+*.pyc
+.DS_Store

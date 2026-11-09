@@ -1,0 +1,47 @@
+{
+  "name": "pebble-voice-notes",
+  "author": "PebbleDev",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Voice Notes",
+    "uuid": "7a93f418-2e06-444a-9b16-95a287e07ca4",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "capabilities": [
+      "configurable"
+    ],
+    "messageKeys": [
+      "AppKeyAction",
+      "NoteId",
+      "NoteTime",
+      "NoteText",
+      "NoteCount",
+      "NoteIndex",
+      "SettingTTL",
+      "SettingQuickLaunchRecord"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "IMAGE_MENU_ICON",
+          "file": "images/menu_icon.png",
+          "menuIcon": true
+        }
+      ]
+    }
+  }
+}
