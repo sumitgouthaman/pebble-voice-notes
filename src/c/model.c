@@ -13,7 +13,7 @@ static int s_day_section_count = 0;
 
 static AppSettings s_settings = {
   .ttl_seconds = DEFAULT_TTL_SECONDS,
-  .quick_launch_record = true
+  .quick_launch_mode = QUICK_LAUNCH_NEW_NOTE
 };
 
 static ModelChangeCallback s_change_callback = NULL;
@@ -327,11 +327,11 @@ const AppSettings* model_get_settings(void) {
   return &s_settings;
 }
 
-void model_update_settings(int32_t ttl_seconds, bool quick_launch_record) {
+void model_update_settings(int32_t ttl_seconds, uint8_t quick_launch_mode) {
   bool changed = (s_settings.ttl_seconds != ttl_seconds) ||
-                 (s_settings.quick_launch_record != quick_launch_record);
+                 (s_settings.quick_launch_mode != quick_launch_mode);
   s_settings.ttl_seconds = ttl_seconds;
-  s_settings.quick_launch_record = quick_launch_record;
+  s_settings.quick_launch_mode = quick_launch_mode;
   if (changed) {
     save_settings();
   }

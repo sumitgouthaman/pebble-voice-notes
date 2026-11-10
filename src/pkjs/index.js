@@ -195,10 +195,11 @@ function pumpQueue() {
 }
 
 function sendSettingsToWatch(settings) {
+  var ql = settings.quickLaunch !== undefined ? parseInt(settings.quickLaunch, 10) : 1;
   enqueue({
     AppKeyAction: ACTION_UPDATE_SETTINGS,
     SettingTTL: settings.ttl,
-    SettingQuickLaunchRecord: settings.quickLaunch ? 1 : 0
+    SettingQuickLaunchRecord: isNaN(ql) ? 1 : ql
   });
 }
 
@@ -344,7 +345,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   if (!result) return;
 
   var ttl = result.ttl !== undefined ? parseInt(result.ttl, 10) : DEFAULT_TTL;
-  var quickLaunch = result.quickLaunch !== undefined ? (result.quickLaunch ? 1 : 0) : 1;
+  var quickLaunch = result.quickLaunch !== undefined ? parseInt(result.quickLaunch, 10) : 1;
+  if (isNaN(quickLaunch)) quickLaunch = 1;
   var newNotes = Array.isArray(result.notes) ? result.notes : [];
 
   var settings = { ttl: ttl, quickLaunch: quickLaunch };
@@ -427,8 +429,13 @@ function getConfigHtml(payload) {
     '<select id="ttl-select"><option value="86400">1 Day</option><option value="259200">3 Days</option><option value="604800">1 Week (Default)</option><option value="1209600">2 Weeks</option><option value="2592000">1 Month (30 Days)</option><option value="0">Keep Forever (No Expiration)</option></select>',
     '<div class="help-text">Notes older than this threshold will be automatically purged.</div></div>',
     '<div class="form-group" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">',
-    '<label class="switch-label"><span>Quick Launch Auto-Record</span><label class="switch"><input type="checkbox" id="quick-launch-toggle"><span class="slider"></span></label></label>',
-    '<div class="help-text">Directly open the microphone when opened via Quick Launch shortcut.</div></div></div>',
+    '<label for="quick-launch-select">Quick Launch Action</label>',
+    '<select id="quick-launch-select">',
+    '<option value="1">Voice Notes - New Note (Open Mic Directly)</option>',
+    '<option value="0">Voice Notes (Open Notes List)</option>',
+    '<option value="2">Both by Button (Up/Select = New Note, Down/Back = Open App)</option>',
+    '</select>',
+    '<div class="help-text">Choose what happens when launched from a watch Quick Launch button shortcut.</div></div></div>',
     '<div class="section-title"><span>Your Voice Notes (<span id="notes-count">0</span>)</span><span class="swipe-hint">Swipe card to delete</span></div>',
     '<button type="button" class="btn-secondary" id="btn-add-note">+ Add Text Note Manually</button>',
     '<div id="notes-container"></div>',
@@ -448,11 +455,11 @@ function getConfigHtml(payload) {
     'function endSwipe(){if(!tracking)return;tracking=false;if(locked!=="h")return;card.classList.remove("dragging");var threshold=Math.min(90,card.offsetWidth*0.32);if(Math.abs(dx)>=threshold){deleteNoteAt(idx,card,dx<0?-1:1);}else{card.style.transform="translateX(0)";}}',
     'card.addEventListener("touchend",endSwipe,{passive:true});',
     'card.addEventListener("touchcancel",endSwipe,{passive:true});}',
-    'function render(){document.getElementById("ttl-select").value=s_ttl;document.getElementById("quick-launch-toggle").checked=(s_quickLaunch===1);document.getElementById("notes-count").textContent=s_notes.length;var c=document.getElementById("notes-container");c.innerHTML="";if(s_notes.length===0){var empty=document.createElement("div");empty.className="empty-state card";empty.textContent="No voice notes recorded yet. Record on your watch or add one above!";c.appendChild(empty);return}',
+    'function render(){document.getElementById("ttl-select").value=s_ttl;document.getElementById("quick-launch-select").value=s_quickLaunch;document.getElementById("notes-count").textContent=s_notes.length;var c=document.getElementById("notes-container");c.innerHTML="";if(s_notes.length===0){var empty=document.createElement("div");empty.className="empty-state card";empty.textContent="No voice notes recorded yet. Record on your watch or add one above!";c.appendChild(empty);return}',
     's_notes.forEach(function(note,idx){var wrap=document.createElement("div");wrap.className="note-swipe-wrap";var bg=document.createElement("div");bg.className="swipe-bg";bg.innerHTML="<span>Delete</span><span>Delete</span>";wrap.appendChild(bg);var card=document.createElement("div");card.className="note-card";var h=document.createElement("div");h.className="note-header";var t=document.createElement("div");t.className="note-time";t.textContent=formatTime(note.time||note.timestamp);var del=document.createElement("button");del.className="btn-delete";del.textContent="Delete";del.onclick=function(){deleteNoteAt(idx,card,-1);};h.appendChild(t);h.appendChild(del);var ta=document.createElement("textarea");ta.className="note-textarea";ta.value=note.text||"";ta.maxLength=159;ta.oninput=function(){note.text=ta.value};card.appendChild(h);card.appendChild(ta);attachSwipe(card,idx);wrap.appendChild(card);c.appendChild(wrap);});}',
     'document.getElementById("btn-add-note").onclick=function(){var txt=prompt("Enter note text:");if(txt&&txt.trim().length>0){var now=Math.floor(Date.now()/1000);s_notes.unshift({id:now,time:now,text:txt.trim().substring(0,159)});render()}};',
     'document.getElementById("btn-cancel").onclick=function(){window.location.href="pebblejs://close#"};',
-    'document.getElementById("btn-save").onclick=function(){var ttlVal=parseInt(document.getElementById("ttl-select").value,10);var qlVal=document.getElementById("quick-launch-toggle").checked?1:0;var clean=s_notes.filter(function(n){return n.text&&n.text.trim().length>0});var res={ttl:ttlVal,quickLaunch:qlVal,notes:clean};window.location.href="pebblejs://close#"+encodeURIComponent(JSON.stringify(res))};',
+    'document.getElementById("btn-save").onclick=function(){var ttlVal=parseInt(document.getElementById("ttl-select").value,10);var qlVal=parseInt(document.getElementById("quick-launch-select").value,10);var clean=s_notes.filter(function(n){return n.text&&n.text.trim().length>0});var res={ttl:ttlVal,quickLaunch:qlVal,notes:clean};window.location.href="pebblejs://close#"+encodeURIComponent(JSON.stringify(res))};',
     'render();})();</script></body></html>'
   ].join('');
 }

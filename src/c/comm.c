@@ -185,7 +185,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       Tuple *ql_tuple = dict_find(iterator, MESSAGE_KEY_SettingQuickLaunchRecord);
 
       int32_t ttl = ttl_tuple ? ttl_tuple->value->int32 : model_get_settings()->ttl_seconds;
-      bool ql = ql_tuple ? (ql_tuple->value->int32 != 0) : model_get_settings()->quick_launch_record;
+      uint8_t ql = ql_tuple ? (uint8_t)ql_tuple->value->int32 : model_get_settings()->quick_launch_mode;
 
       model_update_settings(ttl, ql);
       break;

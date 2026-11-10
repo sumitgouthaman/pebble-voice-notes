@@ -7,17 +7,17 @@ static Window *s_window = NULL;
 static MenuLayer *s_menu_layer = NULL;
 
 #if defined(PBL_PLATFORM_EMERY)
-  #define HEADER_HEIGHT 24
-  #define ACTION_ROW_HEIGHT 52
-  #define NOTE_ROW_HEIGHT 56
+  #define HEADER_HEIGHT 26
+  #define ACTION_ROW_HEIGHT 56
+  #define NOTE_ROW_HEIGHT 70
 #elif defined(PBL_PLATFORM_CHALK)
   #define HEADER_HEIGHT 26
-  #define ACTION_ROW_HEIGHT 46
-  #define NOTE_ROW_HEIGHT 50
+  #define ACTION_ROW_HEIGHT 52
+  #define NOTE_ROW_HEIGHT 64
 #else
-  #define HEADER_HEIGHT 20
-  #define ACTION_ROW_HEIGHT 44
-  #define NOTE_ROW_HEIGHT 48
+  #define HEADER_HEIGHT 24
+  #define ACTION_ROW_HEIGHT 50
+  #define NOTE_ROW_HEIGHT 62
 #endif
 
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
@@ -67,9 +67,9 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 
   // Section header text
   graphics_context_set_text_color(ctx, PBL_IF_COLOR_ELSE(GColorBlack, GColorWhite));
-  GRect text_frame = GRect(6, 1, bounds.size.w - 12, bounds.size.h - 2);
+  GRect text_frame = GRect(6, 0, bounds.size.w - 12, bounds.size.h - 2);
   graphics_draw_text(ctx, sec->title,
-                     fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                     fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                      text_frame,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
@@ -87,13 +87,13 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     GColor title_color = is_highlighted ?
       GColorWhite : PBL_IF_COLOR_ELSE(GColorCobaltBlue, GColorBlack);
     GColor sub_color = is_highlighted ?
-      PBL_IF_COLOR_ELSE(GColorLightGray, GColorWhite) : PBL_IF_COLOR_ELSE(GColorDarkGray, GColorBlack);
+      GColorWhite : GColorBlack;
 
     graphics_context_set_fill_color(ctx, bg_color);
     graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 
     graphics_context_set_text_color(ctx, title_color);
-    GRect title_rect = GRect(8, 2, bounds.size.w - 16, 22);
+    GRect title_rect = GRect(8, 1, bounds.size.w - 16, 22);
     graphics_draw_text(ctx, "+ Take Voice Note",
                        fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                        title_rect,
@@ -104,7 +104,7 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     graphics_context_set_text_color(ctx, sub_color);
     GRect sub_rect = GRect(8, 22, bounds.size.w - 16, 18);
     graphics_draw_text(ctx, "Tap to record memo",
-                       fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                       fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
                        sub_rect,
                        GTextOverflowModeTrailingEllipsis,
                        GTextAlignmentLeft,
@@ -121,9 +121,9 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
   GColor bg_color = is_highlighted ?
     PBL_IF_COLOR_ELSE(GColorCobaltBlue, GColorBlack) : GColorWhite;
   GColor time_color = is_highlighted ?
-    GColorWhite : GColorBlack;
-  GColor text_color = is_highlighted ?
-    PBL_IF_COLOR_ELSE(GColorLightGray, GColorWhite) : PBL_IF_COLOR_ELSE(GColorDarkGray, GColorBlack);
+    GColorWhite : PBL_IF_COLOR_ELSE(GColorCobaltBlue, GColorBlack);
+  // High-contrast black/white for note body (no gray dithering)
+  GColor text_color = is_highlighted ? GColorWhite : GColorBlack;
 
   graphics_context_set_fill_color(ctx, bg_color);
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
@@ -137,7 +137,6 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
       strftime(time_str, sizeof(time_str), "%H:%M", tm);
     } else {
       strftime(time_str, sizeof(time_str), "%I:%M %p", tm);
-      // Remove leading zero if present
       if (time_str[0] == '0') {
         memmove(time_str, &time_str[1], strlen(time_str));
       }
@@ -146,9 +145,9 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     snprintf(time_str, sizeof(time_str), "Note");
   }
 
-  // Draw time prominently
+  // Draw prominent time header
   graphics_context_set_text_color(ctx, time_color);
-  GRect time_rect = GRect(8, 2, bounds.size.w - 16, 22);
+  GRect time_rect = GRect(8, 0, bounds.size.w - 16, 22);
   graphics_draw_text(ctx, time_str,
                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                      time_rect,
@@ -156,15 +155,21 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                      GTextAlignmentLeft,
                      NULL);
 
-  // Draw truncated note text
+  // Draw 2-line prominent note text in bold high-contrast font
   graphics_context_set_text_color(ctx, text_color);
-  GRect text_rect = GRect(8, 22, bounds.size.w - 16, bounds.size.h - 24);
+  GRect text_rect = GRect(8, 20, bounds.size.w - 16, bounds.size.h - 22);
   graphics_draw_text(ctx, note->text,
-                     fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                     fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                      text_rect,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
                      NULL);
+
+  // Subtle bottom border between note rows when unhighlighted
+  if (!is_highlighted) {
+    graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(GColorLightGray, GColorBlack));
+    graphics_draw_line(ctx, GPoint(8, bounds.size.h - 1), GPoint(bounds.size.w - 8, bounds.size.h - 1));
+  }
 }
 
 static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {

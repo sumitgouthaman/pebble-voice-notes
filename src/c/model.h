@@ -18,9 +18,15 @@ typedef struct {
   char text[NOTE_TEXT_MAX_LEN];
 } VoiceNote;
 
+enum {
+  QUICK_LAUNCH_OPEN_LIST = 0, // "Voice Notes" (open app list)
+  QUICK_LAUNCH_NEW_NOTE = 1,  // "Voice Notes - New Note" (open mic directly)
+  QUICK_LAUNCH_BY_BUTTON = 2  // Up/Select = New Note, Down/Back = Open App
+};
+
 typedef struct {
-  int32_t ttl_seconds;      // 0 = never, otherwise seconds
-  bool quick_launch_record; // true = start mic directly on Quick Launch
+  int32_t ttl_seconds;       // 0 = never, otherwise seconds
+  uint8_t quick_launch_mode; // QUICK_LAUNCH_* enum (1 byte, matches legacy bool)
 } AppSettings;
 
 typedef struct {
@@ -53,4 +59,4 @@ int model_get_global_index(int section_index, int row);
 int model_cleanup_ttl(void);
 
 const AppSettings* model_get_settings(void);
-void model_update_settings(int32_t ttl_seconds, bool quick_launch_record);
+void model_update_settings(int32_t ttl_seconds, uint8_t quick_launch_mode);

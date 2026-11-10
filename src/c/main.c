@@ -60,14 +60,20 @@ static void init(void) {
 
   // 5. Check if launched via Quick Launch shortcut
   const AppSettings *settings = model_get_settings();
-  APP_LOG(APP_LOG_LEVEL_INFO, "Settings: ttl=%ld, quick_launch_record=%d",
-          (long)(settings ? settings->ttl_seconds : -1),
-          settings ? (int)settings->quick_launch_record : -1);
+  uint8_t ql_mode = settings ? settings->quick_launch_mode : QUICK_LAUNCH_NEW_NOTE;
+  ButtonId btn = launch_button();
+  APP_LOG(APP_LOG_LEVEL_INFO, "Settings: ttl=%ld, quick_launch_mode=%d, launch_button=%d",
+          (long)(settings ? settings->ttl_seconds : -1), (int)ql_mode, (int)btn);
 
-  if (reason == APP_LAUNCH_QUICK_LAUNCH && (!settings || settings->quick_launch_record)) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Scheduling Quick Launch dictation start via AppTimer");
-    s_quick_launch_attempts = 0;
-    s_quick_launch_timer = app_timer_register(200, quick_launch_timer_callback, NULL);
+  if (reason == APP_LAUNCH_QUICK_LAUNCH) {
+    bool start_mic = (ql_mode == QUICK_LAUNCH_NEW_NOTE) ||
+                     (ql_mode == QUICK_LAUNCH_BY_BUTTON &&
+                      (btn == BUTTON_ID_UP || btn == BUTTON_ID_SELECT));
+    if (start_mic) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Scheduling Quick Launch dictation start via AppTimer");
+      s_quick_launch_attempts = 0;
+      s_quick_launch_timer = app_timer_register(200, quick_launch_timer_callback, NULL);
+    }
   }
 }
 
